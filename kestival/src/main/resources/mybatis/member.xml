@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="dev.mvc.member.MemberDAOInter">
+
+    <insert id="insert" parameterType="dev.mvc.member.MemberVO">
+        INSERT INTO member(memberno, id, pw, mname, email, phone, zipcode, address1, address2, mdate)
+        VALUES (member_seq.nextval, #{id}, #{pw}, #{mname}, #{email}, #{phone}, #{zipcode}, #{address1}, #{address2}, sysdate)
+    </insert>
+    
+    <select id="read" parameterType="int" resultType="dev.mvc.member.MemberVO">
+        select memberno, mname, id, pw, email, phone, zipcode, address1, address2, mdate
+        from member
+        where memberno=#{memberno}
+    </select>
+    
+    <update id="update" parameterType="map">
+        update member
+        <set>
+            <if test="mname != null">mname=#{mname},</if>
+            <if test="id != null">id=#{id},</if>
+            <if test="pw != null">pw=#{pw},</if>
+            <if test="email != null">email=#{email},</if>
+            <if test="phone != null">phone=#{phone},</if>
+            <if test="zipcode != null">zipcode=#{zipcode},</if>
+            <if test="address1 != null">address1=#{address1},</if>
+            <if test="address2 != null">address2=#{address2},</if>
+        </set>
+        where memberno=#{memberno}
+    </update>
+    
+    <delete id="delete" parameterType="int">
+        delete from member
+        where memberno=#{memberno}
+    </delete>
+    
+    <select id="checkUser" parameterType="map" resultType="dev.mvc.member.MemberVO">
+        select memberno, mname, id, pw
+        from member 
+        where id=#{id} and pw=#{pw}
+    </select>
+    
+</mapper>

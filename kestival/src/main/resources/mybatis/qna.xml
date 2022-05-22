@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="dev.mvc.qna.QnaDAOInter"> 
+    <select id="selectList" resultType="dev.mvc.qna.QnaVO">
+        select qnano, memberno, qwriter, qtitle, qcontext, qdate
+        from qna
+        order by qnano desc
+    </select>
+    
+    <insert id="insert" parameterType="dev.mvc.qna.QnaVO">
+        insert into qna(qnano, memberno, qwriter, qtitle, qcontext, qdate)
+        values(qna_seq.nextval, #{memberno}, #{qwriter}, #{qtitle}, #{qcontext}, sysdate)
+    </insert>
+    
+    <update id="update" parameterType="dev.mvc.qna.QnaVO">
+        update qna
+        set qtitle=#{qtitle}, qcontext=#{qcontext}
+        where qnano=#{qnano}
+    </update>
+    
+    <delete id="delete" parameterType="int">
+        delete from qna
+        where qnano=#{qnano}
+    </delete>
+    
+    <select id="read" parameterType="int" resultType="dev.mvc.qna.QnaVO">
+        select qnano, memberno, qwriter, qtitle, qcontext, qdate
+        from qna
+        where qnano=#{qnano}
+    </select>
+    
+    <select id="count" resultType="int">
+        select count(*)
+        from qna
+        <where>
+            <if test="word != null">
+              qtitle like concat('%',#{word},'%') or qcontext like concat('%',#{word},'%')
+            </if>
+        </where>
+    </select>
+    
+    <select id="listsps" resultType="dev.mvc.qna.QnaVO">
+        select qnano, memberno, qwriter, qtitle, qcontext, qdate, rownum
+        from qna
+        <choose>
+              <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+                <![CDATA[
+                 where rownum >= #{start} and rownum <= #{pernum}
+                 ]]> 
+              </when>
+              <otherwise>
+              <![CDATA[
+                where qtitle like concat('%',#{word},'%') or qcontext like concat('%',#{word},'%') and (rownum >= #{start} and rownum <= {prernum})
+               ]]> 
+              </otherwise>
+            </choose>
+            ORDER BY qnano DESC
+    </select>
+<select id="reselectList" resultType="dev.mvc.reply.ReplyVO">
+        select replyno, adminno, qnano, rwiter, rcontext, rdate
+        from reply
+        where qnano=#{qnano}
+        order by replyno asc
+    </select>
+    
+    <insert id="reinsert" parameterType="dev.mvc.reply.ReplyVO">
+        insert into reply(replyno, adminno, qnano, rwiter, rcontext, rdate)
+        values(reply_seq.nextval, #{adminno}, #{qnano}, #{rwiter}, #{rcontext}, sysdate)
+    </insert>
+    
+    <update id="reupdate" parameterType="dev.mvc.reply.ReplyVO">
+        update reply
+        set rcontext=#{rcontext}
+        where replyno=#{replyno}
+    </update>
+    
+    <delete id="replydelete" parameterType="int">
+        delete from reply
+        where replyno=#{replyno}
+    </delete>
+    
+</mapper>

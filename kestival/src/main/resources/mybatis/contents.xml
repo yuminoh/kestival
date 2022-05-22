@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="dev.mvc.contents.ContentsDAOInter"> 
+
+<insert id="insert" parameterType="dev.mvc.contents.ContentsVO">
+    INSERT INTO contents(contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location)
+    VALUES(contents_seq.nextval, #{cateno}, #{title}, #{context}, #{recom}, #{file1},#{file1saved}, #{thumb1}, #{size1}, sysdate, #{perDate}, #{location})
+  </insert>
+  
+ <select id="read" resultType="dev.mvc.contents.ContentsVO" parameterType="int">
+    SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location
+    FROM contents
+    WHERE contentsno = #{contentsno}
+ </select>
+ 
+ <!-- 추천 -->
+  <update id="update_recom" parameterType="int">
+    UPDATE contents
+    SET recom = recom + 1
+    WHERE contentsno = #{contentsno}
+  </update>
+  
+  <update id="update" parameterType="dev.mvc.contents.ContentsVO">
+    UPDATE contents
+    <set>
+            <if test="title != null">title=#{title},</if>
+            <if test="context != null">context=#{context},</if>
+            <if test="recom != null">recom=#{recom},</if>
+            <if test="file1 != null">file1=#{file1},</if>
+            <if test="file1saved != null">file1saved=#{file1saved},</if>
+            <if test="thumb1 != null">thumb1=#{thumb1},</if>
+            <if test="size1 != null">size1=#{size1},</if>
+            <if test="perDate != null">perDate=#{perDate},</if>
+            <if test="location != null">location=#{location},</if>
+        </set>
+    WHERE contentsno = #{contentsno}
+  </update>
+  
+  <delete id="delete" parameterType="int">
+    DELETE FROM contents
+    WHERE contentsno=#{contentsno}
+  </delete>
+  
+  <select id="count" parameterType="map" resultType="int">
+        select count(*)
+        from contents
+        <where>
+            <if test="word != null">
+              (title like concat('%',#{word},'%') or context like concat('%',#{word},'%')) and cateno=#{cateno}
+            </if>
+        </where>
+    </select>
+    
+    <select id="listsps" parameterType="map" resultType="dev.mvc.contents.ContentsVO">
+        select contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location
+        from contents
+        <choose>
+              <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+                <![CDATA[
+                 where cateno=#{cateno} and (rownum >= #{start} and rownum <= #{pernum})
+                 ]]> 
+              </when>
+              <otherwise>
+              <![CDATA[
+                where cateno=#{cateno} and (title like concat('%',#{word},'%') or context like concat('%',#{word},'%') and (rownum >= #{start} and rownum <= {prernum}))
+               ]]> 
+              </otherwise>
+            </choose>
+            ORDER BY contentsno ASC
+    </select>
+    
+    <!-- 카테고리별 검색 레코드 갯수 -->
+  <select id="search_count" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as cnt
+    FROM contents
+    <choose>
+      <when test="word == null or word == ''"> <!-- 검색하지 않는 경우의 레코드 갯수 -->
+        WHERE cateno=#{cateno}
+      </when>
+      <otherwise> <!-- 검색하는 경우의 레코드 갯수 -->
+        WHERE cateno=#{cateno} AND (title LIKE '%' || #{word} || '%')
+      </otherwise>
+    </choose>
+  </select>    
+  
+  <select id="search_countGrid" resultType="int" parameterType="HashMap">
+    SELECT COUNT(*) as cnt
+    FROM contents
+    <choose>
+      <when test="word == null or word == ''"> <!-- 검색하지 않는 경우의 레코드 갯수 -->
+      </when>
+      <otherwise> <!-- 검색하는 경우의 레코드 갯수 -->
+        WHERE title LIKE '%' || #{word} || '%'
+      </otherwise>
+    </choose>
+  </select>    
+  
+ <!-- 카테고리별 검색 목록 + 페이징 + 메인 이미지 -->   
+  <select id="list" 
+             resultType="dev.mvc.contents.ContentsVO" parameterType="HashMap">
+   SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location, rownum as rn 
+   FROM (
+              SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location, rownum as rn
+              FROM (
+                        SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location
+                        FROM contents
+                        <choose>
+                          <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+                             WHERE cateno=#{cateno}
+                          </when>
+                          <otherwise>
+                            WHERE cateno=#{cateno} AND (title LIKE '%' || #{word} || '%')
+                          </otherwise>
+                        </choose>
+                        ORDER BY contentsno ASC
+               )
+    )
+    WHERE <![CDATA[ rn >= #{start_num} AND rn <= #{end_num} ]]>
+
+  </select> 
+  
+  <select id="listGrid" 
+             resultType="dev.mvc.contents.ContentsVO" parameterType="HashMap">
+   SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location, rownum as rn
+   FROM (
+              SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location, rownum as rn
+              FROM (
+                        SELECT contentsno, cateno, title, context, recom, file1, file1saved, thumb1, size1, rdate, perDate, location
+                        FROM contents
+                        <choose>
+                          <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+                          </when>
+                          <otherwise>
+                            WHERE title LIKE '%' || #{word} || '%'
+                          </otherwise>
+                        </choose>
+                        ORDER BY contentsno ASC
+               )
+    )
+    WHERE <![CDATA[ rn >= #{start_num} AND rn <= #{end_num} ]]>
+
+  </select> 
+</mapper>

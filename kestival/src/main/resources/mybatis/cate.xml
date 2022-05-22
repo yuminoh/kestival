@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="dev.mvc.cate.CateDAOInter"> 
+
+<insert id="insert" parameterType="dev.mvc.cate.CateVO">
+    INSERT INTO cate(cateno, adminno, name, cdate)
+    VALUES(cate_seq.nextval, #{adminno}, #{name}, sysdate)
+  </insert>
+
+<update id="update" parameterType="dev.mvc.cate.CateVO">
+    UPDATE cate
+    SET name=#{name}
+    WHERE cateno = #{cateno}
+  </update>
+  
+  <select id="read" parameterType="int" resultType="dev.mvc.cate.CateVO">
+        select cateno, adminno, name, cdate
+        from cate
+        where cateno=#{cateno}
+    </select>
+    
+  <delete id="delete" parameterType="int">
+    DELETE FROM cate
+    WHERE cateno=#{cateno}
+  </delete>
+  
+  <select id="count" resultType="int">
+        select count(*)
+        from cate
+        <where>
+            <if test="word != null">
+              name like concat('%',#{word},'%')
+            </if>
+        </where>
+    </select>
+    
+    <select id="listsps" resultType="dev.mvc.cate.CateVO">
+        select cateno, adminno, name, cdate, rownum
+        from cate
+        <choose>
+              <when test="word == null or word == ''"> <!-- 검색하지 않는 경우 -->
+                <![CDATA[
+                 where rownum >= #{start} and rownum <= #{pernum}
+                 ]]> 
+              </when>
+              <otherwise>
+              <![CDATA[
+                where name like concat('%',#{word},'%') and (rownum >= #{start} and rownum <= {prernum})
+               ]]> 
+              </otherwise>
+            </choose>
+            ORDER BY cateno ASC
+    </select>
+</mapper>
